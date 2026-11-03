@@ -210,6 +210,32 @@ public class JdbcOwnerRepositoryImpl implements OwnerRepository {
         return new PageImpl<>(owners, pageable, total == null ? 0 : total);
     }
 
+    @Override
+    public Page<Owner> findOwnersSorted(String lastName, String sortField, boolean ascending, Pageable pageable) throws DataAccessException {
+        Map<String, Object> params = new HashMap<>();
+        params.put("size", pageable.getPageSize());
+        params.put("offset", pageable.getOffset());
+        String where = "";
+        if (lastName != null) {
+            where = " WHERE last_name like :lastName";
+            params.put("lastName", lastName + "%");
+        }
+        // owners columns use snake_case: lastName -> last_name
+        String column = sortField.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
+        List<Owner> owners = this.namedParameterJdbcTemplate.query(
+            "SELECT id, first_name, last_name, address, city, telephone FROM owners" + where
+                + " ORDER BY " + column + (ascending ? " ASC" : " DESC") + ", id LIMIT :size OFFSET :offset",
+            params,
+            BeanPropertyRowMapper.newInstance(Owner.class));
+        loadOwnersPetsAndVisits(owners);
+        Long total = this.namedParameterJdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM owners" + where,
+            params,
+            Long.class
+        );
+        return new PageImpl<>(owners, pageable, total == null ? 0 : total);
+    }
+
 	@Override
 	@Transactional
 	public void delete(Owner owner) throws DataAccessException {

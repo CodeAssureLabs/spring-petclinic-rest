@@ -138,6 +138,12 @@ public class ClinicServiceImpl implements ClinicService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<Owner> findOwners(String lastName, String sortField, boolean ascending, Pageable pageable) throws DataAccessException {
+        return ownerRepository.findOwnersSorted(lastName, sortField, ascending, pageable);
+    }
+
+    @Override
     @Transactional
     public void deleteOwner(Owner owner) throws DataAccessException {
         ownerRepository.delete(owner);

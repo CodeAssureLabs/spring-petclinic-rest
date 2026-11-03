@@ -172,6 +172,15 @@ paths:
             maximum: 100
             default: 20
             example: 5
+        - name: sort
+          in: query
+          description: >-
+            Sort order as `field,direction`, e.g. `lastName,asc` or `city,desc`.
+            Supported fields are firstName, lastName and city. Defaults to the owner id.
+          required: false
+          schema:
+            type: string
+            example: lastName,asc
       responses:
         200:
           description: Owner page found and returned.

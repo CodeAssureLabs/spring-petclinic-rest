@@ -30,12 +30,23 @@ public class OwnerRestControllerV2 implements OwnerV2Api {
 
     @Override
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
-    public ResponseEntity<OwnerPageDto> listOwnersPage(String lastName, Integer page, Integer size) {
+    public ResponseEntity<OwnerPageDto> listOwnersPage(String lastName, Integer page, Integer size, String sort) {
         int pageNumber = page == null ? 0 : page;
         int pageSize = size == null ? 20 : size;
+        if (sort == null || sort.isBlank()) {
+            Page<Owner> owners = this.clinicService.findOwners(
+                lastName,
+                PageRequest.of(pageNumber, pageSize, Sort.by("id")));
+            return new ResponseEntity<>(ownerMapper.toOwnerPageDto(owners), HttpStatus.OK);
+        }
+        String[] parts = sort.split(",");
+        String field = parts[0].trim();
+        String direction = parts.length > 1 ? parts[1].trim().toLowerCase() : "asc";
+        if (!direction.equals("asc") && !direction.equals("desc")) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         Page<Owner> owners = this.clinicService.findOwners(
-            lastName,
-            PageRequest.of(pageNumber, pageSize, Sort.by("id")));
+            lastName, field, direction.equals("asc"), PageRequest.of(pageNumber, pageSize));
         return new ResponseEntity<>(ownerMapper.toOwnerPageDto(owners), HttpStatus.OK);
     }
 }
