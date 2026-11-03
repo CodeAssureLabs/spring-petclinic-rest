@@ -19,13 +19,17 @@ package org.springframework.samples.petclinic.rest.controller.v1;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.security.Principal;
 import org.springframework.samples.petclinic.mapper.UserMapper;
 import org.springframework.samples.petclinic.model.User;
 import org.springframework.samples.petclinic.rest.api.UsersApi;
 import org.springframework.samples.petclinic.rest.dto.UserDto;
 import org.springframework.samples.petclinic.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -50,5 +54,20 @@ public class UserRestControllerV1 implements UsersApi {
         User user = userMapper.toUser(userDto);
         this.userService.saveUser(user);
         return new ResponseEntity<>(userMapper.toUserDto(user), headers, HttpStatus.CREATED);
+    }
+
+    /**
+     * Lets a signed-in user maintain their own account (e.g. change their password)
+     * without needing an admin. The client sends back the user object it was given;
+     * the username is always taken from the authenticated principal, so a user can
+     * only ever update their own record.
+     */
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/users/me")
+    public ResponseEntity<UserDto> updateCurrentUser(@Valid @RequestBody UserDto userDto, Principal principal) {
+        User user = userMapper.toUser(userDto);
+        user.setUsername(principal.getName());
+        this.userService.saveUser(user);
+        return new ResponseEntity<>(userMapper.toUserDto(user), HttpStatus.OK);
     }
 }
