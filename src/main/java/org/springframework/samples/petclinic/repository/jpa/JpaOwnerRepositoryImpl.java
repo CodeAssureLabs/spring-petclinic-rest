@@ -118,6 +118,24 @@ public class JpaOwnerRepositoryImpl implements OwnerRepository {
         return new PageImpl<>(owners, pageable, total);
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public Page<Owner> findOwnersSorted(String lastName, String sortField, boolean ascending, Pageable pageable) throws DataAccessException {
+        String where = lastName == null ? "" : " WHERE owner.lastName LIKE :lastName";
+        Query query = this.em.createQuery("SELECT owner FROM Owner owner" + where
+            + " ORDER BY owner." + sortField + (ascending ? " ASC" : " DESC") + ", owner.id");
+        Query countQuery = this.em.createQuery("SELECT COUNT(owner) FROM Owner owner" + where);
+        if (lastName != null) {
+            query.setParameter("lastName", lastName + "%");
+            countQuery.setParameter("lastName", lastName + "%");
+        }
+        query.setFirstResult((int) pageable.getOffset());
+        query.setMaxResults(pageable.getPageSize());
+        List<Owner> owners = query.getResultList();
+        long total = (long) countQuery.getSingleResult();
+        return new PageImpl<>(owners, pageable, total);
+    }
+
 	@Override
 	public void delete(Owner owner) throws DataAccessException {
 		this.em.remove(this.em.contains(owner) ? owner : this.em.merge(owner));

@@ -74,6 +74,16 @@ public interface OwnerRepository {
 	Collection<Owner> findAll() throws DataAccessException;
 
     Page<Owner> findAll(Pageable pageable) throws DataAccessException;
+
+    /**
+     * Retrieve a page of owners ordered by the given property.
+     *
+     * @param lastName  optional last-name prefix filter (may be {@code null})
+     * @param sortField Owner property to order by, e.g. {@code lastName} or {@code city}
+     * @param ascending sort direction
+     * @param pageable  page number and size
+     */
+    Page<Owner> findOwnersSorted(String lastName, String sortField, boolean ascending, Pageable pageable) throws DataAccessException;
 	
     /**
      * Delete an <code>Owner</code> to the data store by <code>Owner</code>.
