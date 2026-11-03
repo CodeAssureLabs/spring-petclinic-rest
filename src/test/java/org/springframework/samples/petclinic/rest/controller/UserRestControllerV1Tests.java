@@ -22,6 +22,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -74,5 +76,22 @@ class UserRestControllerV1Tests {
         this.mockMvc.perform(post("/api/users")
             .content(newVetAsJSON).accept(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "john", roles = "OWNER_ADMIN")
+    void testUpdateCurrentUserKeepsPrincipalUsername() throws Exception {
+        User user = new User();
+        user.setUsername("someone-else");
+        user.setPassword("new-password");
+        user.setEnabled(true);
+        user.addRole("OWNER_ADMIN");
+        ObjectMapper mapper = new ObjectMapper();
+        String userAsJSON = mapper.writeValueAsString(userMapper.toUserDto(user));
+        this.mockMvc.perform(put("/api/users/me")
+            .principal(() -> "john")
+            .content(userAsJSON).accept(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.username").value("john"));
     }
 }
