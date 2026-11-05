@@ -138,6 +138,27 @@ class VetRestControllerV1Tests {
     }
 
     @Test
+    @WithMockUser(roles="OWNER_ADMIN")
+    void testGetVetAsOwnerAdmin() throws Exception {
+    	given(this.clinicService.findVetById(1)).willReturn(vets.get(0));
+        this.mockMvc.perform(get("/api/vets/1")
+        	.accept(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.lastName").value("Carter"));
+    }
+
+    @Test
+    @WithMockUser(roles="OWNER_ADMIN")
+    void testGetAllVetsAsOwnerAdmin() throws Exception {
+    	given(this.clinicService.findAllVets()).willReturn(vets);
+        this.mockMvc.perform(get("/api/vets")
+        	.accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(3));
+    }
+
+    @Test
     @WithMockUser(roles="VET_ADMIN")
     void testCreateVetSuccess() throws Exception {
     	Vet newVet = vets.get(0);
